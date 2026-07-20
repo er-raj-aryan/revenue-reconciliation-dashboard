@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  fullName  String
+  email     String     @unique
+  password  String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  reports   AIReport[]
+  orders    Order[]
+  payments  Payment[]
+  uploads   Upload[]
+}
+
+model Upload {
+  id         String       @id @default(cuid())
+  fileName   String
+  fileType   UploadType
+  status     UploadStatus @default(PENDING)
+  uploadedAt DateTime     @default(now())
+  userId     String
+  orders     Order[]
+  payments   Payment[]
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id             String          @id @default(cuid())
+  orderId        String          @unique
+  orderDate      DateTime
+  customerEmail  String?
+  currency       String
+  grossAmount    Decimal         @db.Decimal(10, 2)
+  discount       Decimal         @db.Decimal(10, 2)
+  netAmount      Decimal         @db.Decimal(10, 2)
+  status         String
+  userId         String
+  uploadId       String?
+  createdAt      DateTime        @default(now())
+  upload         Upload?         @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reconciliation Reconciliation?
+}
+
+model Payment {
+  id             String   @id @default(cuid())
+  transactionRef String   @unique
+  processedAt    DateTime @map("processed_at")
+  orderReference String?
+  currency       String
+  amount         Decimal  @db.Decimal(10, 2)
+  fee            Decimal  @db.Decimal(10, 2)
+  netSettled     Decimal  @db.Decimal(10, 2)
+  type           String
+  status         String
+
+  userId   String
+  uploadId String?
+
+  createdAt DateTime @default(now())
+
+  upload Upload? @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  reconciliations Reconciliation[]
+}
+
+model Reconciliation {
+  id               String  @id @default(cuid())
+  orderId          String  @unique
+  matchedPaymentId String?
+
+  revenueAtRisk Decimal              @db.Decimal(10, 2)
+  status        ReconciliationStatus
+  explanation   String?
+
+  createdAt DateTime @default(now())
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  payment Payment? @relation(fields: [matchedPaymentId], references: [id])
+}
+
+model AIReport {
+  id        String   @id @default(cuid())
+  prompt    String
+  response  String
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum UploadType {
+  ORDERS
+  PAYMENTS
+}
+
+enum ReconciliationStatus {
+  MATCHED
+  MISMATCH
+  MISSING_PAYMENT
+  DUPLICATE_PAYMENT
+}
+
+enum UploadStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
