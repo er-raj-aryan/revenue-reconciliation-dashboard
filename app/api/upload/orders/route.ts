@@ -58,7 +58,7 @@ export async function POST(
       });
 
     await prisma.order.createMany({
-  data: rows.map((row) => ({
+  data: rows.map((row:any) => ({
     uploadId: upload.id,
     userId,
 

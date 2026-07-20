@@ -7,6 +7,19 @@ import { fileToString } from "@/lib/upload";
 import { getCurrentUser } from "@/lib/auth";
 import { parseCSVDate } from "@/lib/date";
 
+// 1. Define the shape of your raw row data based on your CSV structure
+interface CSVRow {
+  transaction_ref?: string;
+  processed_at?: string;
+  order_reference?: string;
+  currency?: string;
+  amount?: string;
+  fee?: string;
+  net_settled?: string;
+  type?: string;
+  status?: string;
+}
+
 export async function POST(request: Request) {
   try {
     const user = await getCurrentUser();
@@ -45,7 +58,7 @@ export async function POST(request: Request) {
     let imported = 0;
     let skipped = 0;
 
-    for (const row of rows) {
+    for (const row of rows as CSVRow[]) {
       try {
         // Skip rows without transaction reference
         if (!row.transaction_ref) {
@@ -97,7 +110,7 @@ export async function POST(request: Request) {
               row.order_reference || null,
 
             currency:
-              row.currency,
+              row.currency || "",
 
             amount:
               new Prisma.Decimal(
@@ -115,10 +128,10 @@ export async function POST(request: Request) {
               ),
 
             type:
-              row.type,
+              row.type || "",
 
             status:
-              row.status,
+              row.status || "",
           },
         });
 

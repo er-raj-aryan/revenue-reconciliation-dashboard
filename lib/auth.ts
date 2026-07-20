@@ -14,7 +14,11 @@ export async function getCurrentUser() {
 
   try {
     const payload =
-      await verifySession(session);
+      await verifySession(session) as { userId?: string };
+
+    if (!payload?.userId) {
+      return null;
+    }
 
     return prisma.user.findUnique({
       where: {
