@@ -6,6 +6,7 @@ import {
   Loader2,
   Sparkles,
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 interface Props {
   issue: any;
@@ -113,7 +114,7 @@ export default function AiPanel({
 
       {!loading && text && (
         <div className="rounded-2xl bg-black/20 p-5 leading-8 text-slate-300 whitespace-pre-wrap">
-          {text}
+         <ReactMarkdown>{text}</ReactMarkdown>
         </div>
       )}
     </div>
